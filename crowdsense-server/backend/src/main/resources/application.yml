@@ -11,7 +11,7 @@ spring:
     driver-class-name: com.mysql.cj.jdbc.Driver
     url: jdbc:mysql://localhost:3306/crowdsense?useUnicode=true&characterEncoding=utf-8&useSSL=false&serverTimezone=Asia/Shanghai&allowPublicKeyRetrieval=true
     username: root
-    password: ${MYSQL_PASSWORD:}  # 通过环境变量设置，不要在此提交真实密码
+    password: Jiangjf1314525.
     hikari:
       minimum-idle: 5
       maximum-pool-size: 20
@@ -23,8 +23,8 @@ spring:
   servlet:
     multipart:
       enabled: true
-      max-file-size: 20MB
-      max-request-size: 20MB
+      max-file-size: 500MB
+      max-request-size: 500MB
 
 mybatis-plus:
   configuration:
@@ -50,6 +50,10 @@ app:
   upload:
     dir: uploads/images
     density-dir: uploads/density
+    video-dir: uploads/videos
+    frames-dir: uploads/frames
+  inference:
+    frame-interval: 2
 
 logging:
   level:

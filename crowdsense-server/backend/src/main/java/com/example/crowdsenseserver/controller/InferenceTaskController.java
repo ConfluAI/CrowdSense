@@ -11,6 +11,7 @@ import org.springframework.security.core.context.SecurityContextHolder;
 import org.springframework.web.bind.annotation.*;
 
 import java.util.HashMap;
+import java.util.List;
 import java.util.Map;
 
 @RestController
@@ -38,11 +39,11 @@ public class InferenceTaskController {
             @RequestParam(required = false) Integer crowdCount,
             @RequestParam(required = false) String densityPath,
             @RequestParam(required = false) Long inferenceTime,
-            @RequestParam(required = false) String status) {
+            @RequestParam(required = false) String status,
+            @RequestParam(required = false) String taskType) {
         Page<InferenceTask> page = new Page<>(current, size);
         LambdaQueryWrapper<InferenceTask> wrapper = new LambdaQueryWrapper<>();
 
-        // Only return current user's tasks
         wrapper.eq(InferenceTask::getUserId, getCurrentUserId());
 
         if (imageName != null && !imageName.isEmpty()) {
@@ -63,11 +64,25 @@ public class InferenceTaskController {
         if (status != null && !status.isEmpty()) {
             wrapper.like(InferenceTask::getStatus, status);
         }
+        if (taskType != null && !taskType.isEmpty()) {
+            wrapper.eq(InferenceTask::getTaskType, taskType);
+        }
 
+        wrapper.orderByDesc(InferenceTask::getCreateTime);
         Page<InferenceTask> result = inferenceTaskService.page(page, wrapper);
         Map<String, Object> map = new HashMap<>();
         map.put("records", result.getRecords());
         map.put("total", result.getTotal());
+        return map;
+    }
+
+    @GetMapping("/{id}/frames")
+    public Map<String, Object> getVideoFrames(@PathVariable Long id) {
+        LambdaQueryWrapper<InferenceTask> wrapper = new LambdaQueryWrapper<>();
+        wrapper.eq(InferenceTask::getBatchId, id)
+               .orderByAsc(InferenceTask::getFrameIndex);
+        Map<String, Object> map = new HashMap<>();
+        map.put("records", inferenceTaskService.list(wrapper));
         return map;
     }
 
@@ -90,5 +105,17 @@ public class InferenceTaskController {
     @DeleteMapping("/{id}")
     public boolean delete(@PathVariable Long id) {
         return inferenceTaskService.removeById(id);
+    }
+
+    @DeleteMapping("/batch/{batchId}")
+    public boolean deleteByBatchId(@PathVariable Long batchId) {
+        LambdaQueryWrapper<InferenceTask> wrapper = new LambdaQueryWrapper<>();
+        wrapper.eq(InferenceTask::getBatchId, batchId);
+        return inferenceTaskService.remove(wrapper);
+    }
+
+    @DeleteMapping("/batch")
+    public boolean deleteBatch(@RequestBody List<Long> ids) {
+        return inferenceTaskService.removeByIds(ids);
     }
 }

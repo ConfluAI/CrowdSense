@@ -160,6 +160,175 @@ public class InferenceController {
         return result;
     }
 
+    @PostMapping("/upload-video")
+    public Map<String, Object> uploadVideo(@RequestParam("file") MultipartFile file,
+                                           @RequestParam(defaultValue = "2") int interval) {
+        Map<String, Object> result = new HashMap<>();
+
+        if (file.isEmpty()) {
+            result.put("code", 400);
+            result.put("message", "请选择视频文件");
+            return result;
+        }
+
+        String contentType = file.getContentType();
+        if (contentType == null || !contentType.startsWith("video/")) {
+            result.put("code", 400);
+            result.put("message", "仅支持视频文件");
+            return result;
+        }
+
+        String username = SecurityContextHolder.getContext().getAuthentication().getName();
+        SysUser currentUser = userDetailsService.getSysUser(username);
+
+        InferenceTask videoTask = new InferenceTask();
+        videoTask.setUserId(currentUser.getId());
+        videoTask.setTaskType("VIDEO");
+        videoTask.setVideoName(file.getOriginalFilename());
+        videoTask.setStatus("PENDING");
+        videoTask.setCreateTime(LocalDateTime.now());
+        videoTask.setUpdateTime(LocalDateTime.now());
+        inferenceTaskService.save(videoTask);
+
+        try {
+            // Save video to temp file
+            String videoDir = appProperties.getUpload().getVideoDir();
+            Path videoDirPath = resolveUploadPath(videoDir);
+            Files.createDirectories(videoDirPath);
+            String ext = getExtension(file.getOriginalFilename());
+            String videoSavedName = videoTask.getId() + "_" + ext;
+            Path videoPath = videoDirPath.resolve(videoSavedName);
+            file.transferTo(videoPath.toFile());
+            videoTask.setVideoPath(videoSavedName);
+
+            // Prepare output directories for Python
+            String videoAbsPath = videoPath.toAbsolutePath().toString().replace('\\', '/');
+            Path framesDirPath = resolveUploadPath(appProperties.getUpload().getFramesDir());
+            String framesAbsDir = framesDirPath.toAbsolutePath().toString().replace('\\', '/');
+            Path densityDirPath = resolveUploadPath(appProperties.getUpload().getDensityDir());
+            String densityAbsDir = densityDirPath.toAbsolutePath().toString().replace('\\', '/');
+
+            // Python does all the work: extract frames, batch inference, save files
+            java.net.URI inferUri = org.springframework.web.util.UriComponentsBuilder
+                    .fromHttpUrl("http://127.0.0.1:8000/infer-video")
+                    .queryParam("interval", interval)
+                    .queryParam("path", videoAbsPath)
+                    .queryParam("frames_dir", framesAbsDir)
+                    .queryParam("density_dir", densityAbsDir)
+                    .queryParam("task_id", videoTask.getId())
+                    .build(true).toUri();
+
+            log.info("Video inference via Python: {} frames, {}s interval",
+                    videoTask.getVideoName(), interval);
+            ResponseEntity<String> response = restTemplate.getForEntity(inferUri, String.class);
+            JsonNode videoResult = objectMapper.readTree(response.getBody());
+
+            int totalFrames = videoResult.get("totalFrames").asInt();
+            JsonNode framesArray = videoResult.get("frames");
+            videoTask.setTotalFrames(totalFrames);
+
+            if (totalFrames == 0) {
+                videoTask.setStatus("FAILED");
+                videoTask.setUpdateTime(LocalDateTime.now());
+                inferenceTaskService.updateById(videoTask);
+                result.put("code", 500);
+                result.put("message", "视频帧提取失败，无有效帧");
+                return result;
+            }
+
+            // Build response data + DB records from Python's metadata
+            List<Map<String, Object>> frameResults = new ArrayList<>();
+            List<InferenceTask> frameTasks = new ArrayList<>();
+            double sumCount = 0;
+            int maxCount = 0, minCount = Integer.MAX_VALUE;
+            long totalInferTime = 0;
+
+            for (JsonNode fi : framesArray) {
+                int fiIndex = fi.get("frameIndex").asInt();
+                double timestamp = fi.get("timestamp").asDouble();
+                int crowdCount = fi.get("crowdCount").asInt();
+                String densityLevel = fi.get("densityLevel").asText();
+                String levelTag = fi.get("levelTag").asText();
+                long inferTime = fi.get("inferenceTime").asLong();
+                String imagePath = fi.get("imagePath").asText();
+                String densityPathVal = fi.get("densityPath").asText();
+
+                InferenceTask frameTask = new InferenceTask();
+                frameTask.setUserId(currentUser.getId());
+                frameTask.setTaskType("FRAME");
+                frameTask.setBatchId(videoTask.getId());
+                frameTask.setFrameIndex(fiIndex);
+                frameTask.setTimestampSeconds(timestamp);
+                frameTask.setImageName("frame_" + String.format("%04d", fiIndex) + ".jpg");
+                frameTask.setImagePath(imagePath);
+                frameTask.setCrowdCount(crowdCount);
+                frameTask.setDensityLevel(densityLevel);
+                frameTask.setDensityPath(densityPathVal);
+                frameTask.setInferenceTime(inferTime);
+                frameTask.setStatus("SUCCESS");
+                frameTask.setCreateTime(LocalDateTime.now());
+                frameTask.setUpdateTime(LocalDateTime.now());
+                frameTasks.add(frameTask);
+
+                sumCount += crowdCount;
+                maxCount = Math.max(maxCount, crowdCount);
+                minCount = Math.min(minCount, crowdCount);
+                totalInferTime += inferTime;
+
+                Map<String, Object> fr = new HashMap<>();
+                fr.put("frameIndex", fiIndex);
+                fr.put("timestamp", timestamp);
+                fr.put("crowdCount", crowdCount);
+                fr.put("densityLevel", densityLevel);
+                fr.put("levelTag", levelTag);
+                fr.put("imageUrl", "/api/files/frames/" + imagePath);
+                fr.put("densityUrl", "/api/files/density/" + densityPathVal);
+                fr.put("inferenceTime", inferTime);
+                frameResults.add(fr);
+            }
+
+            double avgCount = totalFrames > 0 ? sumCount / totalFrames : 0;
+
+            // Prepare video task update
+            videoTask.setCrowdCount((int) Math.round(avgCount));
+            videoTask.setInferenceTime(totalInferTime);
+            videoTask.setStatus("SUCCESS");
+            videoTask.setUpdateTime(LocalDateTime.now());
+
+            // Save DB records
+            inferenceTaskService.updateById(videoTask);
+            inferenceTaskService.saveBatch(frameTasks);
+            log.info("Video task {} completed: {} frames, avg={}", videoTask.getId(), totalFrames, avgCount);
+
+            // Return result to user
+            result.put("code", 200);
+            result.put("message", "success");
+            Map<String, Object> data = new HashMap<>();
+            data.put("taskId", videoTask.getId());
+            data.put("videoName", file.getOriginalFilename());
+            data.put("totalFrames", totalFrames);
+            data.put("interval", interval);
+            Map<String, Object> summary = new HashMap<>();
+            summary.put("maxCount", maxCount);
+            summary.put("minCount", minCount == Integer.MAX_VALUE ? 0 : minCount);
+            summary.put("avgCount", Math.round(avgCount * 10) / 10.0);
+            data.put("summary", summary);
+            data.put("frames", frameResults);
+            result.put("data", data);
+
+        } catch (Exception e) {
+            log.error("Video inference failed for task {}", videoTask.getId(), e);
+            videoTask.setStatus("FAILED");
+            videoTask.setUpdateTime(LocalDateTime.now());
+            inferenceTaskService.updateById(videoTask);
+
+            result.put("code", 500);
+            result.put("message", "视频推理失败: " + e.getMessage());
+        }
+
+        return result;
+    }
+
     private Path resolveUploadPath(String relativePath) {
         return Paths.get(baseDir, relativePath);
     }
