@@ -9,7 +9,7 @@ import numpy as np
 from PIL import Image, ImageDraw, ImageFont
 import torch
 from torchvision import transforms
-from fastapi import FastAPI, UploadFile, File
+from fastapi import FastAPI, UploadFile, File, Query
 from fastapi.responses import JSONResponse
 import uvicorn
 
@@ -160,6 +160,144 @@ async def infer(file: UploadFile = File(...)):
         "dmapW": dmap_w,
         "dmapH": dmap_h
     })
+
+
+def _process_video(video_path, interval, batch_size, frames_dir, density_dir, task_id, cleanup_temp=False):
+    """Core video processing: extract frames, batch inference, save files to disk.
+
+    Saves frame images and density maps directly to the shared upload directories.
+    Returns metadata only (file paths, counts, levels) — no base64.
+    """
+    t0 = time.time()
+
+    cap = cv2.VideoCapture(video_path)
+    if not cap.isOpened():
+        if cleanup_temp:
+            try: os.remove(video_path)
+            except: pass
+        return {"error": "Cannot open video file"}
+
+    fps = cap.get(cv2.CAP_PROP_FPS)
+    total_frames = int(cap.get(cv2.CAP_PROP_FRAME_COUNT))
+    duration = total_frames / fps if fps > 0 else 0
+
+    frames_subdir = os.path.join(frames_dir, str(task_id))
+    os.makedirs(frames_subdir, exist_ok=True)
+    os.makedirs(density_dir, exist_ok=True)
+
+    raw_frames = []
+    max_dim = 1024
+    t_extract = time.time()
+    t = 0.0
+    while t < duration:
+        cap.set(cv2.CAP_PROP_POS_MSEC, t * 1000)
+        ret, frame_bgr = cap.read()
+        if not ret:
+            t += interval
+            continue
+        frame_rgb = cv2.cvtColor(frame_bgr, cv2.COLOR_BGR2RGB)
+        img = Image.fromarray(frame_rgb)
+        ow, oh = img.size
+        if max(ow, oh) > max_dim:
+            scale = max_dim / max(ow, oh)
+            img = img.resize((int(ow * scale), int(oh * scale)), Image.BILINEAR)
+        raw_frames.append((t, img, ow, oh))
+        t += interval
+    cap.release()
+    if cleanup_temp:
+        try: os.remove(video_path)
+        except: pass
+    extract_ms = int((time.time() - t_extract) * 1000)
+
+    if not raw_frames:
+        return {"error": "No frames extracted"}
+
+    t_infer = time.time()
+    all_results = []
+    for chunk_start in range(0, len(raw_frames), batch_size):
+        chunk = raw_frames[chunk_start:chunk_start + batch_size]
+        tensors = [transform(f[1]).unsqueeze(0) for f in chunk]
+        batch_tensor = torch.cat(tensors, dim=0).to(device)
+        with torch.no_grad():
+            densities, _ = model(batch_tensor)
+
+        for i, (timestamp, img, orig_w, orig_h) in enumerate(chunk):
+            fi = chunk_start + i
+            w, h = img.size
+            dmap_np = densities[i, 0].cpu().numpy()
+            count = int(dmap_np.sum())
+            level_str, level_tag, level_bgra = analyze_density_level(dmap_np)
+
+            heatmap_png, _ = density_to_heatmap(
+                densities[i:i + 1], orig_w, orig_h, level_str, level_bgra)
+
+            # Save frame image to disk directly
+            frame_name = f"frame_{fi:04d}.jpg"
+            frame_path = os.path.join(frames_subdir, frame_name)
+            img.save(frame_path, format="JPEG", quality=85)
+
+            # Save density heatmap to disk directly
+            dmap_name = f"density_{task_id}_{fi}.png"
+            dmap_path = os.path.join(density_dir, dmap_name)
+            with open(dmap_path, "wb") as f:
+                f.write(heatmap_png)
+
+            all_results.append({
+                "frameIndex": fi,
+                "timestamp": round(timestamp, 2),
+                "crowdCount": count,
+                "densityLevel": level_str,
+                "levelTag": level_tag,
+                "imagePath": f"{task_id}/{frame_name}",
+                "densityPath": dmap_name,
+                "width": w,
+                "height": h
+            })
+
+    infer_ms = int((time.time() - t_infer) * 1000)
+    per_frame = infer_ms / len(raw_frames) if raw_frames else 0
+    for r in all_results:
+        r["inferenceTime"] = int(per_frame)
+    total_ms = int((time.time() - t0) * 1000)
+
+    return {
+        "totalFrames": len(all_results),
+        "duration": round(duration, 2),
+        "fps": round(fps, 2),
+        "interval": interval,
+        "totalTime": total_ms,
+        "extractTime": extract_ms,
+        "inferenceTime": infer_ms,
+        "frames": all_results
+    }
+
+
+@app.post("/infer-video")
+async def infer_video(file: UploadFile = File(...), interval: float = 2.0,
+                       batch_size: int = 8, frames_dir: str = "", density_dir: str = "",
+                       task_id: int = 0):
+    """Extract frames from uploaded video via HTTP multipart (backward compatible)."""
+    contents = await file.read()
+    video_path = os.path.join(os.path.dirname(__file__), "_tmp_video.mp4")
+    with open(video_path, "wb") as f:
+        f.write(contents)
+    fd = frames_dir or os.path.join(os.path.dirname(__file__), "_frames")
+    dd = density_dir or os.path.join(os.path.dirname(__file__), "_density")
+    result = _process_video(video_path, interval, batch_size, fd, dd, task_id, cleanup_temp=True)
+    if "error" in result:
+        return JSONResponse(result, status_code=400)
+    return JSONResponse(result)
+
+
+@app.get("/infer-video")
+async def infer_video_path(path: str = Query(...), interval: float = 2.0,
+                            batch_size: int = 8, frames_dir: str = Query(...),
+                            density_dir: str = Query(...), task_id: int = Query(...)):
+    """Extract frames from local video file, save results directly to shared dirs."""
+    result = _process_video(path, interval, batch_size, frames_dir, density_dir, task_id)
+    if "error" in result:
+        return JSONResponse(result, status_code=400)
+    return JSONResponse(result)
 
 
 @app.get("/health")
