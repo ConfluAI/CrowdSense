@@ -240,7 +240,7 @@ const loadData = async () => {
     const params = { current: pagination.current, size: pagination.size, ...searchForm }
     Object.keys(params).forEach(k => { if (params[k] === '' || params[k] === null) delete params[k] })
     const res = await getInferenceTaskList(params)
-    list.value = (res.records || res.data?.records || []).filter(r => r.taskType !== 'FRAME')
+    list.value = res.records || res.data?.records || []
     pagination.total = res.total || res.data?.total || 0
   } catch {
     ElMessage.error('加载数据失败')

@@ -1,6 +1,6 @@
 # CrowdSense
 
-基于 DM-Count (ResNet-34 FPN) 的人群计数管理系统，支持 GPU 推理、密度等级分类和完整的数据管理。
+基于 DM-Count (ResNet-34 FPN) 的人群计数管理系统，支持 **图片推理** 和 **视频流密度分析**，提供 GPU 批量推理、密度等级分类和完整的数据管理。
 
 ## 架构
 
@@ -12,11 +12,13 @@ crowdsense/
 │   └── saved_models/           # 模型权重 (需单独下载)
 ├── crowdsense-server/
 │   ├── backend/                # Spring Boot 3.2 REST API (端口 8080)
-│   └── frontend/               # Vue3 + Element Plus (端口 5173)
+│   └── frontend/               # Vue3 + Element Plus + ECharts (端口 5173)
 └── config.json
 ```
 
-**推理流程**: 前端上传图片 → Java 后端接收 → 转发给 Python GPU 推理服务 → 返回密度等级 + 密度图 → 入库
+**图片推理**: 前端上传图片 → Java 后端接收 → 转发给 Python GPU 推理服务 → 返回密度等级 + 密度图 → 入库
+
+**视频推理**: 前端上传视频 → Java 存盘并传路径给 Python → OpenCV 抽帧 → **批量 GPU 推理** → 帧图/密度图直接写盘 → 返回时间序列数据
 
 ## 环境要求
 
@@ -105,10 +107,10 @@ npm run dev
 
 | 密度值范围 | 等级标签 | 说明 |
 |-----------|---------|------|
-| < 0.01 | 低密度 Low | 人群稀疏 |
-| 0.01 - 0.05 | 正常密度 Normal | 正常人流 |
-| 0.05 - 0.12 | 密集 Dense | 人群较为密集 |
-| >= 0.12 | 极度拥挤 Crowded | 高度拥挤 |
+| < 0.02 | 低密度 Low | 人群稀疏 |
+| 0.02 - 0.06 | 正常密度 Normal | 正常人流 |
+| 0.06 - 0.15 | 密集 Dense | 人群较为密集 |
+| >= 0.15 | 极度拥挤 Crowded | 高度拥挤 |
 
 ## API 接口
 
@@ -116,11 +118,15 @@ npm run dev
 |------|------|------|
 | POST | `/api/auth/login` | 登录获取 JWT |
 | POST | `/api/inference/upload` | 上传图片推理 |
-| GET | `/api/inference/list` | 推理任务列表 |
-| GET | `/api/inference/{id}` | 推理任务详情 |
-| DELETE | `/api/inference/{id}` | 删除推理任务 |
+| POST | `/api/inference/upload-video` | 上传视频流分析 |
+| GET | `/api/inference_tasks` | 推理任务列表（支持 taskType/status 筛选） |
+| GET | `/api/inference_tasks/{id}` | 任务详情 |
+| GET | `/api/inference_tasks/{id}/frames` | 视频帧列表 |
+| DELETE | `/api/inference_tasks/{id}` | 删除任务 |
+| DELETE | `/api/inference_tasks/batch` | 批量删除 |
 | GET | `/api/files/images/{name}` | 查看上传图片 |
 | GET | `/api/files/density/{name}` | 查看密度图 |
+| GET | `/api/files/frames/{taskId}/{filename}` | 查看视频帧图 |
 
 ## 配置说明
 
@@ -132,8 +138,12 @@ spring:
 
 app:
   upload:
-    dir: uploads/images       # 上传图片存储路径
+    dir: uploads/images           # 上传图片存储路径
     density-dir: uploads/density  # 密度图存储路径
+    video-dir: uploads/videos     # 上传视频存储路径
+    frames-dir: uploads/frames    # 视频帧图存储路径
+  inference:
+    frame-interval: 2             # 视频抽帧间隔（秒）
 
 jwt:
   secret: <base64-encoded>    # JWT 签名密钥

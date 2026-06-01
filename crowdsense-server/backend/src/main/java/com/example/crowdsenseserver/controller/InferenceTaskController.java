@@ -66,6 +66,9 @@ public class InferenceTaskController {
         }
         if (taskType != null && !taskType.isEmpty()) {
             wrapper.eq(InferenceTask::getTaskType, taskType);
+        } else {
+            // Default: exclude FRAME child records, show only IMAGE + VIDEO
+            wrapper.ne(InferenceTask::getTaskType, "FRAME");
         }
 
         wrapper.orderByDesc(InferenceTask::getCreateTime);
