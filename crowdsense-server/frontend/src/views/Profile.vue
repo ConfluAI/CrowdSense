@@ -1,6 +1,6 @@
 <template>
   <div class="profile">
-    <el-card shadow="hover" class="profile-card">
+    <el-card shadow="never" class="profile-card glass-card">
       <template #header>
         <div class="card-header">
           <span class="card-title">个人信息</span>

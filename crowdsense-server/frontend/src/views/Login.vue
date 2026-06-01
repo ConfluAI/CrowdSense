@@ -17,7 +17,7 @@
         <p class="login-subtitle">人群计数管理系统</p>
       </div>
 
-      <el-card class="login-box" shadow="always">
+      <el-card class="login-box glass-card" shadow="never">
         <!-- 登录模式 -->
         <template v-if="!isRegister">
           <el-form :model="loginForm" :rules="loginRules" ref="loginFormRef">
@@ -170,42 +170,58 @@ const handleRegister = async () => {
 <style scoped>
 .login-container {
   height: 100vh; display: flex; justify-content: center; align-items: center;
-  background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
   position: relative; overflow: hidden;
 }
 
-.login-bg { position: absolute; inset: 0; overflow: hidden; }
+.login-bg { position: absolute; inset: 0; overflow: hidden; pointer-events: none; }
 .login-bubble {
   position: absolute; bottom: -150px;
-  background: rgba(255,255,255,0.08); border-radius: 50%;
+  background: rgba(255,255,255,0.12); border-radius: 50%;
   animation: float-up linear infinite;
 }
 @keyframes float-up {
   0% { transform: translateY(0) scale(1); opacity: 0; }
   10% { opacity: 1; }
-  90% { opacity: 0.5; }
+  90% { opacity: 0.4; }
   100% { transform: translateY(-110vh) scale(1.3); opacity: 0; }
 }
 
 .login-card-wrapper { position: relative; z-index: 1; text-align: center; }
 
-.login-logo { margin-bottom: 24px; }
-.login-brand { color: #fff; font-size: 28px; font-weight: 700; margin: 12px 0 4px; letter-spacing: 2px; }
-.login-subtitle { color: rgba(255,255,255,0.75); font-size: 14px; margin: 0; }
+.login-logo { margin-bottom: 28px; }
+.login-brand { color: #fff; font-size: 32px; font-weight: 800; margin: 14px 0 6px; letter-spacing: 3px; text-shadow: 0 2px 12px rgba(0,0,0,0.5); }
+.login-subtitle { color: rgba(255,255,255,0.85); font-size: 15px; margin: 0; text-shadow: 0 1px 6px rgba(0,0,0,0.4); letter-spacing: 2px; }
 
 .login-box {
-  width: 400px; border-radius: 12px;
-  box-shadow: 0 12px 40px rgba(0,0,0,0.2) !important;
+  width: 420px;
+  background: rgba(255,255,255,0.85) !important;
+  backdrop-filter: blur(20px);
+  -webkit-backdrop-filter: blur(20px);
+  border: 1px solid rgba(255,255,255,0.5) !important;
+  border-radius: 18px !important;
+  box-shadow: 0 20px 60px rgba(0,0,0,0.2), 0 4px 16px rgba(0,0,0,0.1) !important;
+  overflow: hidden;
 }
 
 .login-input :deep(.el-input__wrapper) {
-  border-radius: 8px; transition: box-shadow 0.3s;
+  border-radius: 10px; transition: all 0.3s; background: rgba(255,255,255,0.7);
 }
-.login-input :deep(.el-input__wrapper):hover { box-shadow: 0 0 0 1px #409EFF inset; }
+.login-input :deep(.el-input__wrapper):hover { box-shadow: 0 0 0 1px #409EFF inset; background: rgba(255,255,255,0.95); }
 
-.login-btn { width: 100%; border-radius: 8px; letter-spacing: 4px; font-size: 16px; transition: transform 0.2s, box-shadow 0.2s; }
-.login-btn:hover { transform: translateY(-1px); box-shadow: 0 6px 20px rgba(64,158,255,0.4); }
-.register-btn:hover { box-shadow: 0 6px 20px rgba(103,194,58,0.4); }
+.login-btn {
+  width: 100%; border-radius: 10px !important; letter-spacing: 6px; font-size: 16px;
+  height: 44px;
+  transition: transform 0.2s, box-shadow 0.2s;
+  background: linear-gradient(135deg, #409EFF, #66b1ff) !important;
+  border: none !important;
+  box-shadow: 0 6px 20px rgba(64,158,255,0.35) !important;
+}
+.login-btn:hover { transform: translateY(-2px); box-shadow: 0 10px 28px rgba(64,158,255,0.45) !important; }
+.register-btn {
+  background: linear-gradient(135deg, #67c23a, #85ce61) !important;
+  box-shadow: 0 6px 20px rgba(103,194,58,0.35) !important;
+}
+.register-btn:hover { box-shadow: 0 10px 28px rgba(103,194,58,0.45) !important; }
 
-.login-switch { padding-top: 18px; border-top: 1px solid #ebeef5; color: #909399; font-size: 13px; }
+.login-switch { padding-top: 18px; border-top: 1px solid rgba(0,0,0,0.06); color: #909399; font-size: 13px; }
 </style>

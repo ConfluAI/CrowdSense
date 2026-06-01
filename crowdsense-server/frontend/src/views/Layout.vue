@@ -116,64 +116,77 @@ const handleLogout = () => {
 .layout-container { height: 100vh; }
 
 .aside {
-  background: linear-gradient(180deg, #1a1a2e 0%, #16213e 50%, #304156 100%);
+  background: rgba(10, 12, 20, 0.92) !important;
+  backdrop-filter: blur(20px);
+  -webkit-backdrop-filter: blur(20px);
+  border-right: 1px solid rgba(255, 255, 255, 0.08);
   overflow: hidden;
 }
 
 .logo {
   height: 64px; display: flex; align-items: center; justify-content: center; gap: 10px;
   border-bottom: 1px solid rgba(255,255,255,0.08);
+  background: rgba(0,0,0,0.15);
 }
-.logo-icon { flex-shrink: 0; }
-.logo-text { color: #fff; font-size: 18px; font-weight: 700; letter-spacing: 1px; }
+.logo-icon { flex-shrink: 0; filter: drop-shadow(0 2px 6px rgba(0,0,0,0.3)); }
+.logo-text { color: #fff; font-size: 18px; font-weight: 800; letter-spacing: 2px; text-shadow: 0 2px 8px rgba(0,0,0,0.3); }
 
 .el-menu-vertical {
   border-right: none;
+  background: transparent !important;
 }
 .el-menu-vertical .el-menu-item {
-  margin: 4px 8px;
-  border-radius: 8px;
-  transition: all 0.25s ease;
+  margin: 5px 10px;
+  border-radius: 10px;
+  transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+  color: #bfcbd9;
 }
 .el-menu-vertical .el-menu-item:hover {
-  background-color: rgba(255,255,255,0.08) !important;
+  background: rgba(255,255,255,0.1) !important;
+  color: #fff;
 }
 .el-menu-vertical .el-menu-item.is-active {
-  background: linear-gradient(90deg, #409EFF, #66b1ff) !important;
-  box-shadow: 0 2px 12px rgba(64,158,255,0.35);
+  background: linear-gradient(135deg, rgba(64,158,255,0.85), rgba(102,177,255,0.7)) !important;
+  box-shadow: 0 4px 16px rgba(64,158,255,0.35);
+  color: #fff;
+  font-weight: 600;
+  backdrop-filter: blur(8px);
 }
 
-.right-container { background: #f0f2f5; }
+.right-container { background: transparent; }
 
 .header {
-  background: #fff;
-  box-shadow: 0 2px 8px rgba(0,21,41,0.06);
+  background: rgba(255,255,255,0.72) !important;
+  backdrop-filter: blur(16px);
+  -webkit-backdrop-filter: blur(16px);
+  box-shadow: 0 2px 20px rgba(0,21,41,0.06);
   display: flex; align-items: center; justify-content: space-between;
-  padding: 0 24px;
+  padding: 0 28px;
   z-index: 10;
+  border-bottom: 1px solid rgba(255,255,255,0.4);
+  height: 60px;
 }
 
 .header-left { display: flex; align-items: center; }
 
 .header-right { display: flex; align-items: center; gap: 18px; }
 
-.header-time { color: #909399; font-size: 13px; font-family: 'Courier New', monospace; }
+.header-time { color: #606266; font-size: 13px; font-family: 'Courier New', monospace; font-weight: 500; }
 
 .user-info {
-  display: flex; align-items: center; gap: 6px;
-  cursor: pointer; color: #606266; font-size: 14px;
-  padding: 4px 8px; border-radius: 6px;
-  transition: background 0.2s;
+  display: flex; align-items: center; gap: 8px;
+  cursor: pointer; color: #303133; font-size: 14px;
+  padding: 6px 12px; border-radius: 20px;
+  transition: background 0.25s;
+  background: rgba(0,0,0,0.03);
 }
-.user-info:hover { background: #f5f7fa; }
-.user-avatar { background: linear-gradient(135deg, #409EFF, #66b1ff); color: #fff; font-weight: 600; }
-.user-name { max-width: 100px; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+.user-info:hover { background: rgba(0,0,0,0.06); }
+.user-avatar { background: linear-gradient(135deg, #409EFF, #66b1ff); color: #fff; font-weight: 700; }
+.user-name { max-width: 100px; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; font-weight: 500; }
 
 .main {
-  background-color: #f0f2f5;
-  background-image: radial-gradient(circle, #dcdfe6 1px, transparent 1px);
-  background-size: 20px 20px;
-  padding: 20px;
+  background: transparent;
+  padding: 20px 24px;
   min-height: calc(100vh - 60px);
 }
 </style>

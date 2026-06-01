@@ -51,13 +51,13 @@
     <!-- 图表区域 -->
     <el-row :gutter="20" style="margin-top: 20px">
       <el-col :span="12">
-        <el-card shadow="hover">
+        <el-card shadow="never" class="glass-card">
           <template #header><span class="card-title">密度等级分布</span></template>
           <v-chart :option="densityPieOption" style="height: 320px" autoresize />
         </el-card>
       </el-col>
       <el-col :span="12">
-        <el-card shadow="hover">
+        <el-card shadow="never" class="glass-card">
           <template #header><span class="card-title">近7天任务趋势</span></template>
           <v-chart :option="weeklyTrendOption" style="height: 320px" autoresize />
         </el-card>
@@ -225,20 +225,20 @@ onMounted(() => {
 <style scoped>
 .dashboard { padding: 4px; }
 
-/* 统计卡片 */
+/* 统计卡片 — 玻璃态渐变 */
 .stat-card {
-  border-radius: 12px;
+  border-radius: 14px;
   color: #fff;
   overflow: hidden;
   cursor: pointer;
   transition: transform 0.25s, box-shadow 0.25s;
-  box-shadow: 0 4px 14px rgba(0,0,0,0.1);
+  box-shadow: 0 6px 24px rgba(0,0,0,0.12);
 }
-.stat-card:hover { transform: translateY(-4px); box-shadow: 0 8px 24px rgba(0,0,0,0.16); }
-.stat-card--blue { background: linear-gradient(135deg, #409eff, #337ecc); }
-.stat-card--green { background: linear-gradient(135deg, #67c23a, #529b2e); }
-.stat-card--orange { background: linear-gradient(135deg, #e6a23c, #cf8e2f); }
-.stat-card--purple { background: linear-gradient(135deg, #9b59b6, #7d3c98); }
+.stat-card:hover { transform: translateY(-4px); box-shadow: 0 12px 32px rgba(0,0,0,0.18); }
+.stat-card--blue { background: linear-gradient(135deg, rgba(64,158,255,0.88), rgba(51,126,204,0.78)); backdrop-filter: blur(8px); }
+.stat-card--green { background: linear-gradient(135deg, rgba(103,194,58,0.88), rgba(82,155,46,0.78)); backdrop-filter: blur(8px); }
+.stat-card--orange { background: linear-gradient(135deg, rgba(230,162,60,0.88), rgba(207,142,47,0.78)); backdrop-filter: blur(8px); }
+.stat-card--purple { background: linear-gradient(135deg, rgba(155,89,182,0.88), rgba(125,60,152,0.78)); backdrop-filter: blur(8px); }
 
 .stat-card__body {
   display: flex; align-items: center; justify-content: space-between;
@@ -246,8 +246,7 @@ onMounted(() => {
 }
 .stat-card__label { font-size: 14px; opacity: 0.88; margin-bottom: 8px; }
 .stat-card__value { font-size: 36px; font-weight: 700; letter-spacing: 1px; }
-.stat-card__icon { opacity: 0.35; }
+.stat-card__icon { opacity: 0.3; }
 
-.card-title { font-weight: 600; font-size: 15px; }
 .card-header { display: flex; justify-content: space-between; align-items: center; }
 </style>

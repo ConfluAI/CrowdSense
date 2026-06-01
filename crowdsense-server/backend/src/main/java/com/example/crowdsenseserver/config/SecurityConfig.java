@@ -1,6 +1,7 @@
 package com.example.crowdsenseserver.config;
 
 import com.example.crowdsenseserver.security.JwtAuthenticationFilter;
+import jakarta.servlet.http.HttpServletResponse;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
 import org.springframework.http.HttpMethod;
@@ -79,6 +80,14 @@ public class SecurityConfig {
 
                 // 其余请求需要认证
                 .anyRequest().authenticated()
+            )
+
+            // 异常处理：未认证返回 401，权限不足返回 403
+            .exceptionHandling(ex -> ex
+                    .authenticationEntryPoint((request, response, authException) ->
+                            response.sendError(HttpServletResponse.SC_UNAUTHORIZED, "未认证"))
+                    .accessDeniedHandler((request, response, accessDeniedException) ->
+                            response.sendError(HttpServletResponse.SC_FORBIDDEN, "无权限"))
             )
 
             // JWT 过滤器

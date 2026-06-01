@@ -1,7 +1,7 @@
 <template>
   <div class="management">
     <!-- 统计卡片行 -->
-    <el-card shadow="hover" class="stats-card">
+    <el-card shadow="never" class="stats-card glass-card">
       <el-row :gutter="16">
         <el-col :span="6">
           <div class="mini-stat mini-stat--blue">
@@ -43,13 +43,13 @@
     </el-card>
 
     <!-- 密度等级分布 -->
-    <el-card shadow="hover" style="margin-top:16px">
+    <el-card shadow="never" class="glass-card" style="margin-top:16px">
       <template #header><span class="card-title">密度等级分布</span></template>
       <v-chart :option="densityPieOption" style="height:240px" autoresize />
     </el-card>
 
     <!-- 上传推理 -->
-    <el-card class="upload-card" shadow="hover" style="margin-top:16px">
+    <el-card class="upload-card glass-card" shadow="never" style="margin-top:16px">
       <template #header>
         <div style="display:flex;align-items:center;gap:16px">
           <span class="card-title">人群计数推理</span>
@@ -384,20 +384,20 @@ onMounted(() => { loadStats() })
 </script>
 
 <style scoped>
-.management { padding: 20px; }
+.management { padding: 0; }
 
 .stats-card { margin-bottom: 0; }
-.stats-card :deep(.el-card__body) { padding: 16px 20px; }
 .mini-stat {
   display: flex; align-items: center; gap: 14px;
-  background: #fff; padding: 18px 16px; border-radius: 10px;
-  box-shadow: 0 2px 8px rgba(0,0,0,0.06);
+  background: rgba(255,255,255,0.65); padding: 18px 16px; border-radius: 12px;
+  backdrop-filter: blur(8px); -webkit-backdrop-filter: blur(8px);
+  border: 1px solid rgba(255,255,255,0.5);
   transition: transform 0.2s, box-shadow 0.2s;
   cursor: default;
 }
-.mini-stat:hover { transform: translateY(-2px); box-shadow: 0 4px 16px rgba(0,0,0,0.1); }
+.mini-stat:hover { transform: translateY(-2px); box-shadow: 0 6px 20px rgba(0,0,0,0.1); }
 .mini-stat__icon {
-  width: 48px; height: 48px; border-radius: 10px;
+  width: 48px; height: 48px; border-radius: 12px;
   display: flex; align-items: center; justify-content: center;
   color: #fff; flex-shrink: 0;
 }
@@ -408,16 +408,16 @@ onMounted(() => { loadStats() })
 .mini-stat__value { font-size: 22px; font-weight: 700; color: #303133; line-height: 1; }
 .mini-stat__label { font-size: 12px; color: #909399; margin-top: 4px; }
 
-.card-title { font-weight: 600; font-size: 15px; }
-
 .upload-card :deep(.el-upload-dragger) {
-  border: 2px dashed #dcdfe6; border-radius: 10px;
+  border: 2px dashed rgba(0,0,0,0.12); border-radius: 12px;
+  background: rgba(255,255,255,0.4);
   transition: border-color 0.3s, box-shadow 0.3s;
   min-height: 280px; display: flex; align-items: center; justify-content: center;
 }
 .upload-card :deep(.el-upload-dragger):hover {
   border-color: #409EFF;
-  box-shadow: 0 0 0 4px rgba(64,158,255,0.1);
+  background: rgba(255,255,255,0.6);
+  box-shadow: 0 0 0 4px rgba(64,158,255,0.08);
 }
 
 .upload-inner { display: flex; flex-direction: column; align-items: center; }
@@ -428,9 +428,9 @@ onMounted(() => { loadStats() })
   scrollbar-width: thin;
 }
 .frame-gallery::-webkit-scrollbar { height: 4px; }
-.frame-gallery::-webkit-scrollbar-thumb { background: #dcdfe6; border-radius: 2px; }
+.frame-gallery::-webkit-scrollbar-thumb { background: rgba(0,0,0,0.15); border-radius: 2px; }
 .frame-item {
-  flex-shrink: 0; width: 120px; height: 80px; border-radius: 6px;
+  flex-shrink: 0; width: 120px; height: 80px; border-radius: 8px;
   overflow: hidden; cursor: pointer; position: relative;
   border: 2px solid transparent; transition: border-color 0.2s;
 }

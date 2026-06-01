@@ -1,6 +1,6 @@
 <template>
   <div class="history">
-    <el-card shadow="hover">
+    <el-card shadow="never" class="glass-card">
       <template #header>
         <div class="card-header">
           <span class="card-title">历史检测记录</span>
@@ -323,15 +323,22 @@ onMounted(() => { loadData() })
 </script>
 
 <style scoped>
-.history { padding: 20px; }
-.card-title { font-weight: 600; font-size: 15px; }
+.history { padding: 0; }
 .card-header { display: flex; justify-content: space-between; align-items: center; }
-.search-form { margin-bottom: 20px; padding: 20px; background-color: #f5f7fa; border-radius: 4px; }
+.search-form {
+  margin-bottom: 20px; padding: 18px 20px 4px;
+  background: rgba(255,255,255,0.5);
+  backdrop-filter: blur(8px); -webkit-backdrop-filter: blur(8px);
+  border-radius: 12px;
+  border: 1px solid rgba(255,255,255,0.35);
+}
 .pagination { margin-top: 20px; justify-content: flex-end; }
 
 .mini-stat {
-  background: #fff; padding: 14px 12px; border-radius: 8px;
-  box-shadow: 0 1px 6px rgba(0,0,0,0.06); text-align: center;
+  background: rgba(255,255,255,0.65); padding: 14px 12px; border-radius: 10px;
+  backdrop-filter: blur(6px); -webkit-backdrop-filter: blur(6px);
+  border: 1px solid rgba(255,255,255,0.4);
+  text-align: center;
 }
 .mini-stat__value { font-size: 22px; font-weight: 700; color: #303133; }
 .mini-stat__label { font-size: 12px; color: #909399; margin-top: 2px; }
@@ -341,9 +348,9 @@ onMounted(() => { loadData() })
   scrollbar-width: thin;
 }
 .frame-gallery::-webkit-scrollbar { height: 4px; }
-.frame-gallery::-webkit-scrollbar-thumb { background: #dcdfe6; border-radius: 2px; }
+.frame-gallery::-webkit-scrollbar-thumb { background: rgba(0,0,0,0.15); border-radius: 2px; }
 .frame-item {
-  flex-shrink: 0; width: 120px; height: 80px; border-radius: 6px;
+  flex-shrink: 0; width: 120px; height: 80px; border-radius: 8px;
   overflow: hidden; cursor: pointer; position: relative;
   border: 2px solid transparent; transition: border-color 0.2s;
 }

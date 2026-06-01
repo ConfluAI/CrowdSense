@@ -1,6 +1,6 @@
 <template>
   <div class="management">
-    <el-card>
+    <el-card shadow="never" class="glass-card">
       <template #header>
         <div class="card-header">
           <span>角色管理</span>
@@ -227,25 +227,17 @@ onMounted(loadData)
 </script>
 
 <style scoped>
-.management {
-  padding: 20px;
-}
+.management { padding: 0; }
 
-.card-header {
-  display: flex;
-  justify-content: space-between;
-  align-items: center;
-}
+.card-header { display: flex; justify-content: space-between; align-items: center; }
 
 .search-form {
-  margin-bottom: 20px;
-  padding: 20px;
-  background-color: #f5f7fa;
-  border-radius: 4px;
+  margin-bottom: 20px; padding: 18px 20px 4px;
+  background: rgba(255,255,255,0.5);
+  backdrop-filter: blur(8px); -webkit-backdrop-filter: blur(8px);
+  border-radius: 12px;
+  border: 1px solid rgba(255,255,255,0.35);
 }
 
-.pagination {
-  margin-top: 20px;
-  justify-content: flex-end;
-}
+.pagination { margin-top: 20px; justify-content: flex-end; }
 </style>

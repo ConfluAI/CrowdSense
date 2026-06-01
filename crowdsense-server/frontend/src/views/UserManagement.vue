@@ -35,7 +35,7 @@
 
     <el-row :gutter="16" style="margin-top:16px">
       <el-col :span="24">
-        <el-card shadow="hover">
+        <el-card shadow="never" class="glass-card">
           <template #header><span class="card-title">用户状态分布</span></template>
           <v-chart :option="statusBarOption" style="height:200px" autoresize />
         </el-card>
@@ -331,20 +331,19 @@ onMounted(() => { loadData(); loadStats(); fetchDetectionStats() })
 </script>
 
 <style scoped>
-.management { padding: 20px; }
+.management { padding: 0; }
 
-.stats-card { margin-bottom: 0; }
-.stats-card :deep(.el-card__body) { padding: 16px 20px; }
 .mini-stat {
   display: flex; align-items: center; gap: 14px;
-  background: #fff; padding: 18px 16px; border-radius: 10px;
-  box-shadow: 0 2px 8px rgba(0,0,0,0.06);
+  background: rgba(255,255,255,0.65); padding: 18px 16px; border-radius: 12px;
+  backdrop-filter: blur(8px); -webkit-backdrop-filter: blur(8px);
+  border: 1px solid rgba(255,255,255,0.5);
   transition: transform 0.2s, box-shadow 0.2s;
   cursor: default;
 }
-.mini-stat:hover { transform: translateY(-2px); box-shadow: 0 4px 16px rgba(0,0,0,0.1); }
+.mini-stat:hover { transform: translateY(-2px); box-shadow: 0 6px 20px rgba(0,0,0,0.1); }
 .mini-stat__icon {
-  width: 48px; height: 48px; border-radius: 10px;
+  width: 48px; height: 48px; border-radius: 12px;
   display: flex; align-items: center; justify-content: center;
   color: #fff; flex-shrink: 0;
 }
@@ -356,6 +355,12 @@ onMounted(() => { loadData(); loadStats(); fetchDetectionStats() })
 
 .card-title { font-weight: 600; font-size: 15px; }
 .card-header { display: flex; justify-content: space-between; align-items: center; }
-.search-form { margin-bottom: 20px; padding: 20px; background-color: #f5f7fa; border-radius: 4px; }
+.search-form {
+  margin-bottom: 20px; padding: 18px 20px 4px;
+  background: rgba(255,255,255,0.5);
+  backdrop-filter: blur(8px); -webkit-backdrop-filter: blur(8px);
+  border-radius: 12px;
+  border: 1px solid rgba(255,255,255,0.35);
+}
 .pagination { margin-top: 20px; justify-content: flex-end; }
 </style>
