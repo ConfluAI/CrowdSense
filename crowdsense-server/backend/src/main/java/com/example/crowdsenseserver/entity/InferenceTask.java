@@ -10,6 +10,13 @@ public class InferenceTask {
     @TableId(type = IdType.AUTO)
     private Long id;
     private Long userId;
+    private String taskType;  // IMAGE / VIDEO / FRAME
+    private Long batchId;  // 视频任务批次ID
+    private Integer frameIndex;  // 帧序号
+    private Double timestampSeconds;  // 视频时间戳(秒)
+    private String videoName;  // 视频文件名
+    private String videoPath;  // 视频存储路径
+    private Integer totalFrames;  // 总抽帧数
     private String imageName;  // 图片文件名
     private String imagePath;  // 图片存储路径
     private Integer crowdCount;  // 预测人数
