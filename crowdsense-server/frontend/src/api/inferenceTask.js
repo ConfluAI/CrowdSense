@@ -49,3 +49,16 @@ export function uploadInferenceImage(file) {
     timeout: 120000
   })
 }
+
+export function uploadInferenceVideo(file, interval = 2) {
+  const formData = new FormData()
+  formData.append('file', file)
+  formData.append('interval', interval)
+  return request({
+    url: '/inference/upload-video',
+    method: 'post',
+    data: formData,
+    headers: { 'Content-Type': 'multipart/form-data' },
+    timeout: 600000
+  })
+}
